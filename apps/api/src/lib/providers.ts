@@ -22,6 +22,27 @@ export interface ProviderAdapter {
   generate(params: GenerateParams): Promise<ProviderResult>;
 }
 
+// Real, publicly hosted sample media — widely used in web-dev tutorials and
+// stable for years — so the mock provider returns something actually
+// playable instead of a URL that resolves nowhere.
+const SAMPLE_VIDEOS = [
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+];
+const SAMPLE_AUDIO = Array.from(
+  { length: 10 },
+  (_, i) => `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${i + 1}.mp3`,
+);
+
+function pickBySeed<T>(items: T[], seed: string): T {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return items[hash % items.length];
+}
+
 /**
  * Placeholder adapter used until real provider API keys (fal.ai, Replicate,
  * Kling, ElevenLabs, ...) are wired in — lets the full queue -> worker ->
@@ -37,11 +58,13 @@ const mockProvider: ProviderAdapter = {
     // Simulates provider latency so the queued -> processing -> completed
     // state machine in the worker is actually observable.
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    const seed = encodeURIComponent(params.prompt?.slice(0, 40) ?? params.kind);
+    const seed = params.prompt?.slice(0, 40) ?? params.kind;
     const outputUrl =
       params.kind === "image"
-        ? `https://picsum.photos/seed/${seed}/1024/1024`
-        : `https://example-storage.local/generated/${params.kind}/${seed}.mp4`;
+        ? `https://picsum.photos/seed/${encodeURIComponent(seed)}/1024/1024`
+        : params.kind === "audio"
+          ? pickBySeed(SAMPLE_AUDIO, seed)
+          : pickBySeed(SAMPLE_VIDEOS, seed);
     return { outputUrl, costCredits: mockProvider.costPerUnitCredits(params.kind) };
   },
 };

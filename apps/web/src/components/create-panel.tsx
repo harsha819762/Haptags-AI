@@ -195,8 +195,11 @@ export function CreatePanel({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={assetUrl} alt={prompt} className="rounded-md max-w-sm border border-[#DCE3EA]" />
           )}
-          {job.status === "completed" && kind !== "images" && assetUrl && (
-            <p className="text-sm text-[#46566A] font-mono break-all">{assetUrl}</p>
+          {job.status === "completed" && kind === "videos" && assetUrl && (
+            <video controls src={assetUrl} className="rounded-md max-w-sm border border-[#DCE3EA]" />
+          )}
+          {job.status === "completed" && kind === "audio" && assetUrl && (
+            <audio controls src={assetUrl} className="w-full max-w-sm" />
           )}
           {(job.status === "queued" || job.status === "processing") && (
             <p className="text-sm text-[#8A97A6]">This can take a few seconds…</p>
