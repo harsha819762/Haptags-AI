@@ -45,6 +45,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
+    // A 401 on a request that *carried* a token means the session is dead
+    // (expired/invalid JWT), not a bad login attempt — send the user back
+    // to /login. A 401 with no token (e.g. wrong password on the login
+    // screen itself) is left for the caller to handle as a normal error.
+    if (res.status === 401 && token) {
+      clearToken();
+      if (typeof window !== "undefined") window.location.href = "/login";
+    }
     throw new ApiError(body.error ?? "Request failed", res.status);
   }
   if (res.status === 204) return undefined as T;

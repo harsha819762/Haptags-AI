@@ -1,9 +1,10 @@
 import { Worker, type Job } from "bullmq";
+import { fileURLToPath } from "node:url";
 import { prisma } from "@haptags/db";
 import { redisConnection, GENERATIONS_QUEUE, type GenerationJobData } from "./lib/queue.js";
 import { selectProvider, type GenerationKind } from "./lib/providers.js";
 
-async function processGeneration(job: Job<GenerationJobData>) {
+export async function processGeneration(job: Job<GenerationJobData>) {
   const generation = await prisma.generation.findUniqueOrThrow({
     where: { id: job.data.generationId },
     include: { project: true },
@@ -62,27 +63,36 @@ async function processGeneration(job: Job<GenerationJobData>) {
   ]);
 }
 
-const worker = new Worker<GenerationJobData>(
-  GENERATIONS_QUEUE,
-  async (job) => {
-    try {
-      await processGeneration(job);
-    } catch (error) {
-      await prisma.generation.update({
-        where: { id: job.data.generationId },
-        data: { status: "failed", error: error instanceof Error ? error.message : "Unknown error" },
-      });
-      throw error;
-    }
-  },
-  { connection: redisConnection, concurrency: 4 },
-);
+function startWorker() {
+  const worker = new Worker<GenerationJobData>(
+    GENERATIONS_QUEUE,
+    async (job) => {
+      try {
+        await processGeneration(job);
+      } catch (error) {
+        await prisma.generation.update({
+          where: { id: job.data.generationId },
+          data: { status: "failed", error: error instanceof Error ? error.message : "Unknown error" },
+        });
+        throw error;
+      }
+    },
+    { connection: redisConnection, concurrency: 4 },
+  );
 
-worker.on("completed", (job) => {
-  console.log(`[worker] generation ${job.data.generationId} completed`);
-});
-worker.on("failed", (job, error) => {
-  console.error(`[worker] generation ${job?.data.generationId} failed:`, error.message);
-});
+  worker.on("completed", (job) => {
+    console.log(`[worker] generation ${job.data.generationId} completed`);
+  });
+  worker.on("failed", (job, error) => {
+    console.error(`[worker] generation ${job?.data.generationId} failed:`, error.message);
+  });
 
-console.log("[worker] listening on queue:", GENERATIONS_QUEUE);
+  console.log("[worker] listening on queue:", GENERATIONS_QUEUE);
+  return worker;
+}
+
+// Only bind to the queue when this file is run directly (`tsx src/worker.ts`)
+// — not when `processGeneration` is imported for testing.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  startWorker();
+}

@@ -39,6 +39,12 @@ npm run dev:worker
 
 # terminal 5 — frontend
 npm run dev:web         # http://localhost:3000
+
+# optional — demo data (creates demo@haptags.com / haptags-demo)
+npm run db:seed
+
+# optional — API test suite (auth, projects, and the worker's job pipeline)
+npm run test:api
 ```
 
 Image/video/audio generation currently routes through a mock provider
