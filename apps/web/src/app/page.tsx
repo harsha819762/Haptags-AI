@@ -309,6 +309,14 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 pb-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#6E6B66]">
           <span>© 2026 Haptags LLP. All rights reserved.</span>
           <div className="flex items-center gap-5">
+            <a
+              href="https://www.haptags.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#F3F1EC] transition-colors"
+            >
+              AI
+            </a>
             <span className="cursor-default">Privacy</span>
             <span className="cursor-default">Terms</span>
           </div>

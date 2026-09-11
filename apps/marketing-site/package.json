@@ -1,0 +1,27 @@
+{
+  "name": "@haptags/marketing-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Official Enterprise Website for Haptags LLP — Web Development, Mobile Apps, Digital Marketing, Luxury Interiors & Real Estate",
+  "main": "index.html",
+  "scripts": {
+    "dev": "serve . -l 5050",
+    "start": "serve . -l 5050",
+    "build": "echo 'Static site ready'",
+    "preview": "serve . -l 5050"
+  },
+  "keywords": [
+    "haptags",
+    "haptags-llp",
+    "web-development",
+    "mobile-apps",
+    "digital-marketing",
+    "interior-design",
+    "real-estate"
+  ],
+  "author": "Haptags LLP <info@haptags.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
