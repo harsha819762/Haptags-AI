@@ -62,3 +62,23 @@ export function StoryboardIcon(props: { className?: string }) {
     </svg>
   );
 }
+
+export function UpscaleIcon(props: { className?: string }) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" />
+      <rect x="8.5" y="8.5" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+export function RouterIcon(props: { className?: string }) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="5" r="1.8" />
+      <circle cx="5" cy="19" r="1.8" />
+      <circle cx="19" cy="19" r="1.8" />
+      <path d="M12 6.8v6M12 12.8L6 17.5M12 12.8l6 4.7" />
+    </svg>
+  );
+}

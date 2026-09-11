@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { MarketingNav } from "@/components/marketing-nav";
+import { PromoBanner } from "@/components/promo-banner";
 import { TiltCard } from "@/components/tilt-card";
+import { StatusTag } from "@/components/status-tag";
+import { CREATE_ITEMS, PLATFORM_ITEMS, STUDIO_ITEMS, COMPANY_ITEMS } from "@/lib/nav-data";
 import {
   ImageIcon,
   VideoIcon,
@@ -8,36 +11,56 @@ import {
   CharacterIcon,
   CameraIcon,
   StoryboardIcon,
+  UpscaleIcon,
+  RouterIcon,
 } from "@/components/icons";
 
 const FEATURES = [
   {
     label: "Image",
+    status: "live" as const,
     icon: ImageIcon,
     desc: "Text-to-image, image-to-image, editing, and variations across cinematic, product, and illustration styles.",
   },
   {
     label: "Video",
+    status: "live" as const,
     icon: VideoIcon,
     desc: "Text-to-video, image-to-video, and instruction-based video editing with duration and resolution control.",
   },
   {
     label: "Audio & voice",
+    status: "live" as const,
     icon: AudioIcon,
     desc: "Text-to-speech with selectable voices for narration, dialogue, and ad voiceover.",
   },
   {
+    label: "Model router",
+    status: "live" as const,
+    icon: RouterIcon,
+    desc: "Every generation is scored on cost, quality tier, and latency, then sent to the best available provider.",
+  },
+  {
     label: "Character library",
+    status: "beta" as const,
     icon: CharacterIcon,
     desc: "Register a character once — face, style, references — and reuse it across every generation in a project.",
   },
   {
+    label: "Upscale",
+    status: "soon" as const,
+    icon: UpscaleIcon,
+    desc: "Enhance an existing image or video up to 4K without re-generating it from scratch.",
+  },
+  {
     label: "Camera engine",
+    status: "soon" as const,
     icon: CameraIcon,
     desc: "Pan, dolly, orbit, drone, POV — plain-language camera direction the router turns into model instructions.",
   },
   {
     label: "Storyboard & scenes",
+    status: "soon" as const,
     icon: StoryboardIcon,
     desc: "Organize a project into scenes and shots, each with its own character, location, and camera direction.",
   },
@@ -81,6 +104,7 @@ const STYLES = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0A0B0D] text-[#F3F1EC] overflow-x-clip">
+      <PromoBanner />
       <MarketingNav />
 
       {/* Hero */}
@@ -166,11 +190,14 @@ export default function HomePage() {
         <h2 className="font-serif font-bold text-2xl sm:text-3xl max-w-lg">
           Everything a creative team needs, in one place
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
           {FEATURES.map((f) => (
             <TiltCard key={f.label}>
               <div className="group h-full border border-white/10 rounded-lg p-5 bg-white/[0.03] transition-colors hover:border-[#E8963C]/40 hover:bg-white/[0.05]">
-                <f.icon className="w-5 h-5 text-[#E8963C] mb-3" />
+                <div className="flex items-center justify-between mb-3">
+                  <f.icon className="w-5 h-5 text-[#E8963C]" />
+                  <StatusTag status={f.status} />
+                </div>
                 <div className="font-mono text-xs uppercase tracking-wider text-[#F3F1EC] mb-2">
                   {f.label}
                 </div>
@@ -263,9 +290,64 @@ export default function HomePage() {
         </Link>
       </section>
 
-      <footer className="border-t border-white/10 py-8 text-center text-xs text-[#6E6B66]">
-        Haptags LLP
+      <footer className="border-t border-white/10">
+        <div className="max-w-6xl mx-auto px-6 py-14 grid grid-cols-2 sm:grid-cols-4 gap-8">
+          <FooterColumn title="Create" items={CREATE_ITEMS} />
+          <FooterColumn title="Platform" items={PLATFORM_ITEMS} />
+          <FooterColumn title="Studios" items={STUDIO_ITEMS} />
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-[#6E6B66] mb-3">Company</div>
+            <ul className="flex flex-col gap-2.5">
+              {COMPANY_ITEMS.map((label) => (
+                <li key={label} className="text-sm text-[#6E6B66] cursor-default">
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-6 pb-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#6E6B66]">
+          <span>© 2026 Haptags LLP. All rights reserved.</span>
+          <div className="flex items-center gap-5">
+            <span className="cursor-default">Privacy</span>
+            <span className="cursor-default">Terms</span>
+          </div>
+        </div>
       </footer>
+    </div>
+  );
+}
+
+function FooterColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: { label: string; status: "live" | "beta" | "soon" }[];
+}) {
+  return (
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-wider text-[#6E6B66] mb-3">{title}</div>
+      <ul className="flex flex-col gap-2.5">
+        {items.map((item) => (
+          <li key={item.label}>
+            {item.status === "soon" ? (
+              <span className="flex items-center gap-2 text-sm text-[#6E6B66] cursor-default">
+                {item.label}
+                <StatusTag status={item.status} />
+              </span>
+            ) : (
+              <Link
+                href="/signup"
+                className="flex items-center gap-2 text-sm text-[#A9A6A0] hover:text-[#F3F1EC] transition-colors"
+              >
+                {item.label}
+                <StatusTag status={item.status} />
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
