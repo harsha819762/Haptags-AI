@@ -22,15 +22,18 @@ export interface ProviderAdapter {
   generate(params: GenerateParams): Promise<ProviderResult>;
 }
 
-// Real, publicly hosted sample media — widely used in web-dev tutorials and
-// stable for years — so the mock provider returns something actually
-// playable instead of a URL that resolves nowhere.
+// Real, publicly hosted sample media so the mock provider returns something
+// actually playable instead of a URL that resolves nowhere. (Google's old
+// gtv-videos-bucket sample set — commonly used in tutorials for years —
+// started returning 403 AccessDenied on anonymous reads; these were each
+// verified reachable directly before being added here.)
 const SAMPLE_VIDEOS = [
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+  "https://www.w3schools.com/html/mov_bbb.mp4",
+  "https://www.w3schools.com/html/movie.mp4",
+  "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+  "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4",
+  "https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4",
+  "https://test-videos.co.uk/vids/jellyfish/mp4/h264/360/Jellyfish_360_10s_1MB.mp4",
 ];
 const SAMPLE_AUDIO = Array.from(
   { length: 10 },

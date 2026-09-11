@@ -34,6 +34,7 @@ export function CreatePanel({
   const [submitting, setSubmitting] = useState(false);
   const [job, setJob] = useState<Generation | null>(null);
   const [assetUrl, setAssetUrl] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function CreatePanel({
     setError(null);
     setJob(null);
     setAssetUrl(null);
+    setMediaError(false);
     try {
       const created = await api.createGeneration(kind, {
         projectId,
@@ -191,15 +193,34 @@ export function CreatePanel({
           {job.status === "failed" && (
             <p className="text-sm text-[#D03B3B]">{job.error}</p>
           )}
-          {job.status === "completed" && kind === "images" && assetUrl && (
+          {job.status === "completed" && assetUrl && mediaError && (
+            <p className="text-sm text-[#B87800]">
+              The generated file didn&apos;t load.{" "}
+              <a href={assetUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                Open it directly
+              </a>{" "}
+              instead.
+            </p>
+          )}
+          {job.status === "completed" && kind === "images" && assetUrl && !mediaError && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={assetUrl} alt={prompt} className="rounded-md max-w-sm border border-[#DCE3EA]" />
+            <img
+              src={assetUrl}
+              alt={prompt}
+              onError={() => setMediaError(true)}
+              className="rounded-md max-w-sm border border-[#DCE3EA]"
+            />
           )}
-          {job.status === "completed" && kind === "videos" && assetUrl && (
-            <video controls src={assetUrl} className="rounded-md max-w-sm border border-[#DCE3EA]" />
+          {job.status === "completed" && kind === "videos" && assetUrl && !mediaError && (
+            <video
+              controls
+              src={assetUrl}
+              onError={() => setMediaError(true)}
+              className="rounded-md max-w-sm border border-[#DCE3EA]"
+            />
           )}
-          {job.status === "completed" && kind === "audio" && assetUrl && (
-            <audio controls src={assetUrl} className="w-full max-w-sm" />
+          {job.status === "completed" && kind === "audio" && assetUrl && !mediaError && (
+            <audio controls src={assetUrl} onError={() => setMediaError(true)} className="w-full max-w-sm" />
           )}
           {(job.status === "queued" || job.status === "processing") && (
             <p className="text-sm text-[#8A97A6]">This can take a few seconds…</p>
