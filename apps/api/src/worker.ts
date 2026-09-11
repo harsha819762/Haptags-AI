@@ -4,6 +4,21 @@ import { prisma } from "@haptags/db";
 import { redisConnection, GENERATIONS_QUEUE, type GenerationJobData } from "./lib/queue.js";
 import { selectProvider, type GenerationKind } from "./lib/providers.js";
 
+const EXT_MIME_TYPES: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  mp4: "video/mp4",
+  wav: "audio/wav",
+  mp3: "audio/mpeg",
+};
+
+function guessMimeType(outputUrl: string, kind: GenerationKind): string {
+  const ext = outputUrl.split(".").pop()?.toLowerCase().split("?")[0];
+  if (ext && EXT_MIME_TYPES[ext]) return EXT_MIME_TYPES[ext];
+  return { video: "video/mp4", audio: "audio/mpeg", image: "image/png", upscale: "image/png" }[kind];
+}
+
 export async function processGeneration(job: Job<GenerationJobData>) {
   const generation = await prisma.generation.findUniqueOrThrow({
     where: { id: job.data.generationId },
@@ -33,7 +48,7 @@ export async function processGeneration(job: Job<GenerationJobData>) {
       projectId: generation.projectId,
       kind: generation.kind === "video" ? "video" : generation.kind === "audio" ? "audio" : "image",
       storageKey: result.outputUrl,
-      mimeType: generation.kind === "video" ? "video/mp4" : generation.kind === "audio" ? "audio/mpeg" : "image/png",
+      mimeType: guessMimeType(result.outputUrl, generation.kind as GenerationKind),
     },
   });
 

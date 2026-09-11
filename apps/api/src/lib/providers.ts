@@ -1,3 +1,8 @@
+import { randomUUID } from "node:crypto";
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 export type GenerationKind = "image" | "video" | "audio" | "upscale";
 
 export interface GenerateParams {
@@ -72,7 +77,71 @@ const mockProvider: ProviderAdapter = {
   },
 };
 
-const registry: ProviderAdapter[] = [mockProvider];
+const STORAGE_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "storage");
+const INFERENCE_URL = process.env.INFERENCE_URL ?? "http://localhost:8001";
+const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "http://localhost:4000";
+
+const SELF_HOSTED_ENDPOINT: Record<"image" | "audio" | "video", string> = {
+  image: "/generate/image",
+  audio: "/generate/audio",
+  video: "/generate/video",
+};
+const SELF_HOSTED_EXT: Record<"image" | "audio" | "video", string> = {
+  image: "png",
+  audio: "wav",
+  video: "mp4",
+};
+
+/**
+ * Real, self-hosted, open-weight models — no third-party AI provider API,
+ * no external account. Wraps the FastAPI service in apps/inference
+ * (segmind/tiny-sd for image, Piper TTS for audio, damo-vilab/
+ * text-to-video-ms-1.7b for video). Video is a proof of concept: there is
+ * no GPU on this host, so a single clip can take many minutes.
+ */
+const selfHostedProvider: ProviderAdapter = {
+  name: "self-hosted",
+  supports(kind) {
+    // Video is intentionally excluded: damo-vilab/text-to-video-ms-1.7b
+    // produces incoherent noise under the current diffusers version on this
+    // CPU-only host (verified directly — not a step-count/quality issue, the
+    // legacy pipeline's output doesn't denoise into a real image even at 25
+    // steps). Falls through to the mock provider until that's root-caused,
+    // rather than serving static labeled as a real generation.
+    return kind === "image" || kind === "audio";
+  },
+  costPerUnitCredits(kind) {
+    return { image: 5, video: 50, audio: 10, upscale: 30 }[kind];
+  },
+  async generate(params) {
+    const kind = params.kind as "image" | "audio" | "video";
+    const body = kind === "audio" ? { text: params.prompt ?? "" } : { prompt: params.prompt ?? "" };
+
+    const res = await fetch(`${INFERENCE_URL}${SELF_HOSTED_ENDPOINT[kind]}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      // Video with no GPU is genuinely slow — give it real headroom.
+      signal: AbortSignal.timeout(kind === "video" ? 20 * 60_000 : 5 * 60_000),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => res.statusText);
+      throw new Error(`Inference service ${kind} generation failed (${res.status}): ${detail.slice(0, 500)}`);
+    }
+
+    const bytes = Buffer.from(await res.arrayBuffer());
+    const filename = `${randomUUID()}.${SELF_HOSTED_EXT[kind]}`;
+    await writeFile(path.join(STORAGE_DIR, filename), bytes);
+
+    return {
+      outputUrl: `${PUBLIC_API_URL}/generated/${filename}`,
+      costCredits: selfHostedProvider.costPerUnitCredits(params.kind),
+    };
+  },
+};
+
+const registry: ProviderAdapter[] = [selfHostedProvider, mockProvider];
 
 /**
  * The model router's selection step (see blueprint §5): filters candidates by

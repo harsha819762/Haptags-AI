@@ -223,7 +223,11 @@ export function CreatePanel({
             <audio controls src={assetUrl} onError={() => setMediaError(true)} className="w-full max-w-sm" />
           )}
           {(job.status === "queued" || job.status === "processing") && (
-            <p className="text-sm text-[#8A97A6]">This can take a few seconds…</p>
+            <p className="text-sm text-[#8A97A6]">
+              {kind === "videos"
+                ? "Video runs on a self-hosted model with no GPU on this machine — this can take several minutes. Feel free to leave this page and check Generation history later."
+                : "This can take up to a couple of minutes on first use, while the model loads."}
+            </p>
           )}
         </div>
       )}

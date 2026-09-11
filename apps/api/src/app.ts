@@ -1,6 +1,9 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import fastifyStatic from "@fastify/static";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { healthRoutes } from "./routes/health.js";
 import { authRoutes } from "./routes/auth.js";
 import { projectRoutes } from "./routes/projects.js";
@@ -14,6 +17,9 @@ export async function buildApp() {
 
   await app.register(cors, { origin: process.env.WEB_ORIGIN ?? "http://localhost:3000" });
   await app.register(jwt, { secret: process.env.JWT_SECRET ?? "dev-secret-change-me" });
+
+  const storageDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "storage");
+  await app.register(fastifyStatic, { root: storageDir, prefix: "/generated/" });
 
   app.decorate("authenticate", async (request, reply) => {
     try {

@@ -9,3 +9,11 @@ build/
 apps/api/dist/
 packages/db/generated/
 .runtime/
+apps/api/storage/*
+!apps/api/storage/.gitkeep
+apps/inference/.venv/
+apps/inference/voices/
+apps/inference/*.png
+apps/inference/*.wav
+apps/inference/*.mp4
+apps/inference/__pycache__/

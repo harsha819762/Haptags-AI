@@ -25,11 +25,14 @@ describe("processGeneration", () => {
     const project = await prisma.project.create({
       data: { orgId: organization.id, name: "Worker Test Project", kind: "image" },
     });
+    // "upscale" is the one kind self-hosted doesn't support yet, so this
+    // deterministically exercises the mock provider without depending on
+    // the (slow, separately-running) real inference service being up.
     const generation = await prisma.generation.create({
       data: {
         projectId: project.id,
         userId: user.id,
-        kind: "image",
+        kind: "upscale",
         status: "queued",
         prompt: "a test poster",
         params: { style: "cinematic" },
