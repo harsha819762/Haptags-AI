@@ -51,6 +51,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     // screen itself) is left for the caller to handle as a normal error.
     if (res.status === 401 && token) {
       clearToken();
+      // This runs from a plain fetch helper, not a component, so useRouter()
+      // isn't available — a full navigation is the intentional choice here.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       if (typeof window !== "undefined") window.location.href = "/login";
     }
     throw new ApiError(body.error ?? "Request failed", res.status);
