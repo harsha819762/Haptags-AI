@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  owner
+  editor
+  viewer
+}
+
+enum ProjectKind {
+  image
+  video
+  mixed
+}
+
+enum AssetKind {
+  image
+  video
+  audio
+}
+
+enum GenerationKind {
+  image
+  video
+  audio
+  upscale
+}
+
+enum GenerationStatus {
+  queued
+  processing
+  completed
+  failed
+}
+
+model Organization {
+  id            String   @id @default(uuid())
+  name          String
+  planId        String   @default("free") @map("plan_id")
+  creditBalance Int      @default(100) @map("credit_balance")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  users         User[]
+  projects      Project[]
+  ledgerEntries CreditLedgerEntry[]
+  subscriptions Subscription[]
+  apiKeys       ApiKey[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  orgId        String   @map("org_id")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(owner)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  generations  Generation[]
+
+  @@map("users")
+}
+
+model Project {
+  id        String      @id @default(uuid())
+  orgId     String      @map("org_id")
+  name      String
+  kind      ProjectKind @default(mixed)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  characters   Character[]
+  assets       Asset[]
+  generations  Generation[]
+
+  @@map("projects")
+}
+
+model Character {
+  id                 String   @id @default(uuid())
+  projectId          String   @map("project_id")
+  name               String
+  referenceAssetIds  String[] @map("reference_asset_ids")
+  metadata           Json     @default("{}")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("characters")
+}
+
+model Asset {
+  id         String    @id @default(uuid())
+  projectId  String    @map("project_id")
+  kind       AssetKind
+  storageKey String    @map("storage_key")
+  mimeType   String    @map("mime_type")
+  width      Int?
+  height     Int?
+  durationMs Int?      @map("duration_ms")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("assets")
+}
+
+model Generation {
+  id              String           @id @default(uuid())
+  projectId       String           @map("project_id")
+  userId          String           @map("user_id")
+  kind            GenerationKind
+  status          GenerationStatus @default(queued)
+  provider        String?
+  modelId         String?          @map("model_id")
+  prompt          String?
+  params          Json             @default("{}")
+  costCredits     Int              @default(0) @map("cost_credits")
+  inputAssetIds   String[]         @map("input_asset_ids")
+  outputAssetIds  String[]         @map("output_asset_ids")
+  error           String?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  completedAt     DateTime?        @map("completed_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("generations")
+}
+
+model CreditLedgerEntry {
+  id           String   @id @default(uuid())
+  orgId        String   @map("org_id")
+  delta        Int
+  reason       String
+  generationId String?  @map("generation_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@map("credit_ledger")
+}
+
+model Subscription {
+  id                  String    @id @default(uuid())
+  orgId               String    @map("org_id")
+  plan                String
+  status               String
+  renewsAt            DateTime? @map("renews_at")
+  razorpayCustomerId  String?   @map("razorpay_customer_id")
+  stripeCustomerId    String?   @map("stripe_customer_id")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@map("subscriptions")
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  orgId     String    @map("org_id")
+  keyHash   String    @map("key_hash")
+  scopes    String[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@map("api_keys")
+}

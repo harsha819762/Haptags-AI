@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+  --color-accent: #2a78d6;
+  --color-accent-dim: #86b6ef;
+  --color-ink: #131b24;
+  --color-ink-soft: #46566a;
+  --color-muted: #8a97a6;
+  --color-line: #dce3ea;
+  --color-paper: #f6f7f8;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
